@@ -1,6 +1,7 @@
 import Image, { type ImageProps } from "next/image";
 import { Button } from "@repo/ui/button";
 import styles from "./page.module.css";
+import { sharedUtil } from "@repo/utils";
 
 type Props = Omit<ImageProps, "src"> & {
   srcLight: string;
@@ -10,7 +11,7 @@ type Props = Omit<ImageProps, "src"> & {
 const ThemeImage = (props: Props) => {
   const { srcLight, srcDark, ...rest } = props;
 
-  return (
+  return (  
     <>
       <Image {...rest} src={srcLight} className="imgLight" />
       <Image {...rest} src={srcDark} className="imgDark" />
@@ -19,6 +20,7 @@ const ThemeImage = (props: Props) => {
 };
 
 export default function Home() {
+  sharedUtil();
   return (
     <div className={styles.page}>
       <main className={styles.main}>
