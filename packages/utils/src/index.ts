@@ -3,7 +3,7 @@ export function sharedUtil() {
 }
 
 export type Todo = {
-  id: number;
+  id: string;
   todo: string;
 };
 
