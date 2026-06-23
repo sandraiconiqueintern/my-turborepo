@@ -1,3 +1,4 @@
+// packages/utils/src/index.ts
 export function sharedUtil() {
     console.log("This is a shared utility function");
 }
