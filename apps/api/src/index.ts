@@ -10,6 +10,19 @@ app.use(express.json());
 
 let todos: Todo[] = [];
 
+type FakeTodo = {
+  id: string;
+  title: string;
+  done: boolean;
+};
+
+const fakeTodos: FakeTodo[] = [
+  { id: "1", title: "Buy groceries", done: false },
+  { id: "2", title: "Write MCP demo", done: false },
+  { id: "3", title: "Walk the dog", done: true },
+  { id: "4", title: "Read a book", done: false },
+];
+
 function generateCustomId(length: number = 5): string {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
@@ -57,6 +70,10 @@ app.get("/", (req, res) => {
 
 app.get("/todos", (req, res) => {
   res.json(getAllTodos());
+});
+
+app.get("/demo/todos", (req, res) => {
+  res.json(fakeTodos);
 });
 
 app.post("/todos", (req, res) => {

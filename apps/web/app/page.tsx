@@ -13,11 +13,21 @@ const C = {
   brown: "#3B2200",
 };
 
+const CHATBOT_URL = "http://localhost:5001/chat";
+
+type ChatMessage = {
+  role: "user" | "bot";
+  text: string;
+};
+
 export default function Home() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [newTodoText, setNewTodoText] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
 
   const API_URL = "http://localhost:5000/todos";
 
@@ -62,6 +72,38 @@ export default function Home() {
       const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
       if (res.ok) fetchTodos();
     } catch (error) { console.error("Error deleting todo:", error); }
+  };
+
+  const handleChatSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = chatInput.trim();
+    if (!text || chatLoading) return;
+
+    setChatMessages((prev) => [...prev, { role: "user", text }]);
+    setChatInput("");
+    setChatLoading(true);
+
+    try {
+      const res = await fetch(CHATBOT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text }),
+      });
+      const data = await res.json();
+      setChatMessages((prev) => [
+        ...prev,
+        { role: "bot", text: data.reply ?? "(no reply)" },
+      ]);
+      fetchTodos();
+    } catch (error) {
+      console.error("Error talking to chatbot:", error);
+      setChatMessages((prev) => [
+        ...prev,
+        { role: "bot", text: "Sorry, something went wrong." },
+      ]);
+    } finally {
+      setChatLoading(false);
+    }
   };
 
   return (
@@ -114,13 +156,14 @@ export default function Home() {
 
       {/* Content Card */}
       <div className="todo-card" style={{ border: `2px solid ${C.border}`, background: C.bg }}>
+        <div style={{ height: "min(50vh, 420px)", overflowY: "auto" }}>
         {todos.length === 0 ? (
           <div style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            height: "calc(100vh - 180px)",
+            height: "100%",
             color: C.muted,
           }}>
             <Image src="/assets/CatNote.png" alt="No tasks" width={200} height={200} style={{ marginBottom: "0.20rem" }} />
@@ -210,6 +253,104 @@ export default function Home() {
             ))}
           </ul>
         )}
+        </div>
+
+        {/* Chat Section */}
+        <h2 style={{ fontFamily: "var(--font-voltaire), sans-serif", color: C.olive, margin: "150px 0 12px" }}>
+          Ask the Todo Bot
+        </h2>
+
+        <div
+          style={{
+            border: `2px solid ${C.muted}`,
+            borderRadius: "10px",
+            height: "320px",
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              padding: "12px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+            }}
+          >
+            {chatMessages.length === 0 && (
+              <p style={{ color: C.muted, fontFamily: "var(--font-patrick-hand), cursive", fontSize: "18px", margin: 0 }}>
+                Ask me something like &quot;what&apos;s on my todo list?&quot;
+              </p>
+            )}
+            {chatMessages.map((m, i) => (
+              <div
+                key={i}
+                style={{
+                  alignSelf: m.role === "user" ? "flex-end" : "flex-start",
+                  background: m.role === "user" ? C.olive : C.bg,
+                  color: m.role === "user" ? "white" : C.brown,
+                  border: m.role === "user" ? "none" : `1px solid ${C.muted}`,
+                  borderRadius: "10px",
+                  padding: "6px 12px",
+                  maxWidth: "80%",
+                  whiteSpace: "pre-wrap",
+                  fontFamily: "var(--font-patrick-hand), cursive",
+                  fontSize: "18px",
+                }}
+              >
+                {m.text}
+              </div>
+            ))}
+            {chatLoading && (
+              <div style={{ color: C.muted, fontFamily: "var(--font-patrick-hand), cursive", fontSize: "18px" }}>Thinking...</div>
+            )}
+          </div>
+
+          <form
+            onSubmit={handleChatSend}
+            style={{
+              display: "flex",
+              gap: "8px",
+              padding: "12px",
+              flexShrink: 0,
+            }}
+          >
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="Type a message..."
+              className="todo-form-input"
+              style={{
+                flex: 1,
+                border: `2px solid ${C.border}`,
+                background: "transparent",
+                color: C.brown,
+                fontFamily: "var(--font-patrick-hand), cursive",
+                fontSize: "17px",
+              }}
+            />
+            <button type="submit" disabled={chatLoading} style={{
+              padding: "9px 20px",
+              borderRadius: "999px",
+              border: "none",
+              background: C.olive,
+              color: "white",
+              fontFamily: "var(--font-patrick-hand), cursive",
+              fontWeight: 400,
+              fontSize: "17px",
+              cursor: chatLoading ? "default" : "pointer",
+              opacity: chatLoading ? 0.6 : 1,
+              flexShrink: 0,
+            }}>
+              Send
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
